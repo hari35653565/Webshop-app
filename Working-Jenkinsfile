@@ -1,0 +1,62 @@
+pipeline {
+    agent any
+    
+    tools {
+        jdk 'openjdk17'
+    }
+
+    environment {
+        SCANNER_HOME = tool 'sonar-scanner'
+    }
+
+    stages {
+        stage('Git Checkout') {
+            steps {
+                git branch: 'main', changelog: false, poll: false, url: 'https://github.com/hari35653565/Webshop-app.git'
+            }
+        }
+        stage('CLJ-Homes') {
+            steps {
+                sh "clj-holmes fetch-rules"
+                sh "clj-holmes scan -p ./"
+            }
+        }
+
+        stage('OWASP FS SCAN') {
+            steps {
+                dependencyCheck additionalArguments: '--scan ./', odcInstallation: 'DC'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
+
+        stage('TRIVY FS SCAN') {
+            steps {
+                sh "trivy fs ."
+            }
+        }
+
+        stage('SONARQUBE ANALYSIS') {
+            steps {
+                withSonarQubeEnv('sonar') {
+                    sh "$SCANNER_HOME/bin/sonar-scanner -Dsonar.host.url=http://localhost:9000/ -Dsonar.login=<SonarQube-Token> -Dsonar.projectName=webapp -Dsonar.projectKey=webapp"
+                }
+            }
+        }
+
+        stage('Remove Previous Containers') {
+            steps {
+                dir('app') { 
+                    sh "docker-compose down"
+                }
+            }
+        }
+
+        stage('Deploy to container') {
+            steps {
+                dir('app') { 
+                    sh "docker-compose up -d"
+                }
+            }
+        }
+    }
+}
