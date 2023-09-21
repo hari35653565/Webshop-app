@@ -11,7 +11,7 @@ services:
       - POSTGRES_DB=clojure
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready", "-d", "db_prod"]
+      test: ["CMD-SHELL", "pg_isready", "-d", "clojure", "-U", "clojure"]
       timeout: 10s
       retries: 5
 
@@ -21,10 +21,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - 8085:8085
-    depends_on:
-      - db
     environment:
       - DATABASE_URL=postgres://clojure:clojure@db:5432/clojure
-    command: ["java", "-jar", "app.jar"]
-
-  
+    depends_on:
+      - db
