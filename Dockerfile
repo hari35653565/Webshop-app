@@ -6,4 +6,5 @@ RUN lein uberjar
 FROM openjdk:11-jre-slim
 WORKDIR /usr/src/app
 COPY --from=build /usr/src/app/target/uberjar/*-standalone.jar ./app.jar
+COPY logback.xml /usr/src/logback.xml  # Add this line to copy logback.xml
 CMD ["java", "-jar", "app.jar"]
