@@ -1,25 +1,30 @@
 version: "3.4"
 services:
-
   db:
-    image: postgres:12-alpine
-    restart: always
-    expose:
-      - 5432
+    container_name: db
+    image: postgres:15.1
+    ports:
+      - 3003:5432
     environment:
-      - "POSTGRES_PASSWORD=clojure"
-      - "POSTGRES_USER=clojure"
-      - "POSTGRES_DB=clojure"
+      - POSTGRES_PASSWORD=clojure
+      - POSTGRES_USER=clojure
+      - POSTGRES_DB=clojure
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-d", "db_prod"]
+      timeout: 10s
+      retries: 5
 
   clj:
     build:
       context: .
       dockerfile: Dockerfile
-    environment:
-      - "DB_HOST=db"
-      - "WEB_HOST=0.0.0.0"
     ports:
-      - "8081:8081"
-    command: java -jar app.jar
+      - 8085:8085
     depends_on:
       - db
+    environment:
+      - DATABASE_URL=postgres://clojure:clojure@db:5432/clojure
+    command: ["java", "-jar", "app.jar"]
+
+  
